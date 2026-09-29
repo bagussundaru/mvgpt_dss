@@ -7,11 +7,17 @@ Language rule: All UI strings and explanations are in Bahasa Indonesia.
 Data source: config/thresholds.yaml via backend.config_loader.
 """
 
+import sys
 from pathlib import Path
 import json
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
+
+# Ensure project root is in sys.path for Streamlit Cloud execution
+project_root = Path(__file__).resolve().parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from backend.config_loader import load_thresholds
 from backend.engines.fmea_engine import FMEAEngine
