@@ -1,0 +1,188 @@
+# MV-GPT DSS — Threshold Registry
+#
+# SATU-SATUNYA tempat angka bermakna boleh hidup. Tidak ada threshold di dalam kode.
+#
+# Setiap entri WAJIB punya:
+#   value  - angkanya
+#   unit   - satuannya
+#   source - "Dissertation p.NN" ATAU nama standar. JANGAN DICAMPUR.
+#   note   - konteks, keraguan, atau alternatif yang belum disetujui penulis
+#
+# Aturan atribusi: angka yang berasal dari naskah disertasi TIDAK BOLEH ditulis seolah-olah
+# berasal dari IEC/IEEE. Kesalahan ini akan terbaca sebagai kecerobohan ilmiah saat sidang.
+
+meta:
+  dissertation: "Prabowo Soetadji — Proposal Bab I-III Rev3"
+  scope_kv: {min: 1, max: 35, source: "Dissertation p.17-18"}
+  hours_per_month: {value: 730, unit: "hours", source: "Convention", note: "365*24/12"}
+
+ea1:
+  c2h2_critical:
+    mineral:
+      value: 5
+      unit: "ppm"
+      source: "Dissertation p.16"
+      note: >
+        Naskah mengutip Martin et al. 2023 dan Ahmad et al. 2025, bukan langsung IEC 60599.
+        IEEE C57.104-2019 sebenarnya memakai tabel persentil dan laju perubahan, bukan satu
+        angka tunggal. Nilai 5 ppm dipertahankan karena ini angka naskah.
+    natural_ester:
+      value: 5
+      unit: "ppm"
+      source: "Dissertation p.16"
+      note: "Naskah tidak membedakan per jenis cairan. Untuk ester rujukan lazimnya IEEE C57.155."
+    synthetic_ester:
+      value: 5
+      unit: "ppm"
+      source: "Dissertation p.16"
+      note: >
+        Ester mengalami stray gassing dengan pola gas berbeda dari minyak mineral.
+        Perlu dikonfirmasi ke penulis saat data aktual tersedia.
+
+  flash_point_min:
+    mineral:
+      value: 140
+      unit: "degC"
+      source: "IEC 60296"
+      note: "Bukan green transformer. Disediakan sebagai pembanding saja."
+    natural_ester:
+      value: 300
+      unit: "degC"
+      source: "IEC 62770"
+      note: "IEC 62770 adalah standar untuk natural ester."
+    synthetic_ester:
+      value: 250
+      unit: "degC"
+      source: "IEC 61099"
+      note: >
+        PENTING: CLAUDE.md awal merujuk synthetic ester ke IEC 62770. Itu keliru —
+        IEC 62770 untuk natural ester, synthetic ester diatur IEC 61099.
+        Naskah hal. 6 hanya menyebut "flash point tinggi dan biodegradable" tanpa angka.
+
+ea2:
+  safety_margin:
+    value: 1.2
+    unit: "ratio"
+    source: "Engineering practice"
+    note: >
+      Naskah tidak menyebut angka margin. 1,2 adalah asumsi implementasi.
+      IR < Isc = DANGER. Isc <= IR < 1.2*Isc = WARNING. IR >= 1.2*Isc = SAFE.
+  reference_standard:
+    value: "IEC 62271-100"
+    source: "IEC 62271-100"
+    note: "Standar high-voltage AC circuit-breakers."
+  dissertation_example:
+    ir_ka: 16
+    isc_ka: 20
+    expected: "DANGER"
+    source: "Dissertation p.16"
+
+ea3:
+  avg_winding_rise_max:
+    value: 65
+    unit: "K"
+    source: "IEEE C57.91"
+    note: "Kenaikan RATA-RATA winding, bukan hotspot. Sering tertukar."
+  hotspot_rise_max:
+    value: 80
+    unit: "K"
+    source: "IEEE C57.91"
+    note: "Untuk insulasi kelas 65 degC-rise."
+  hotspot_absolute_max:
+    value: 110
+    unit: "degC"
+    source: "IEEE C57.91"
+    note: "Hotspot absolut rated. Untuk ester + high-temp insulation lihat IEEE C57.154."
+  aging_step_temp:
+    value: 7
+    unit: "K"
+    source: "Dissertation p.16"
+    note: "Setiap kenaikan 7 degC di atas batas mempercepat penuaan isolasi ~30%."
+  aging_step_factor:
+    value: 1.30
+    unit: "ratio"
+    source: "Dissertation p.16"
+    note: "aging_acceleration = 1.30 ^ (excess_temp_c / 7)"
+  cooling_types: ["ONAN", "ONAF", "OFAF"]
+
+ea4:
+  max_relative_diff_pct:
+    value: 10
+    unit: "percent"
+    source: "Dissertation p.17"
+    note: >
+      Selisih RELATIF: abs(Za-Zb)/mean(Za,Zb). Naskah tidak menyatakan relatif atau absolut
+      secara eksplisit; praktik industri (IEC 60076-8) memakai relatif.
+  max_kva_ratio:
+    value: 3.0
+    unit: "ratio"
+    source: "IEC 60076-8"
+    note: "Tidak disebut di naskah. Pemeriksaan tambahan, dilaporkan terpisah."
+  max_voltage_ratio_diff_pct:
+    value: 0.5
+    unit: "percent"
+    source: "IEC 60076-8"
+    note: "Tidak disebut di naskah. Pemeriksaan tambahan."
+
+ea5:
+  phase_shift_per_clock:
+    value: 30
+    unit: "degrees"
+    source: "IEC 60076-1"
+  tolerance:
+    value: 0
+    unit: "clock"
+    source: "Dissertation p.17"
+    note: "Biner. Beda jam berapa pun = DANGER. Tidak ada status WARNING untuk EA5."
+
+ram:
+  min_observation_years:
+    value: 10
+    unit: "years"
+    source: "Dissertation p.65"
+    note: "Rekomendasi minimum statistik RAM (Sagharidooz et al. 2024)."
+  target_availability:
+    value: 99.0
+    unit: "percent"
+    source: "Dissertation p.24"
+    note: "Umumnya disyaratkan untuk trafo terintegrasi energi terbarukan."
+  exponential_beta_band:
+    min: 0.9
+    max: 1.1
+    source: "Engineering practice"
+    note: "Di luar band ini, asumsi lambda konstan (pers. 2.1) tidak berlaku. Beri peringatan."
+  interval_rounding:
+    value: "ceil"
+    source: "Dissertation p.29"
+    note: "17,38 bulan dibulatkan menjadi 18 bulan. Ke atas, konservatif. Jangan pakai round()."
+  switchgear_example:
+    t_months: 5.0
+    target_reliability: 0.75
+    mtbf_raw: 17.38
+    interval_months: 18
+    mttr_1day_months: 0.033
+    mttr_2days_months: 0.0667
+    availability_exact_1day: 99.82
+    availability_exact_2days: 99.63
+    source: "Dissertation p.28-29"
+    note: >
+      Naskah hal. 28-29 menulis 'A = 18 / (18 + 0,033) = 99,63 %'.
+      Secara aritmetika 18 / (18 + 0,033) = 99,82%.
+      Angka 99,63% diperoleh persis jika durasi adalah 2 hari (540 / 542 hari = 99,63%
+      atau 18 / (18 + 0,0667) = 99,63%). Catatan ini penting untuk dikonfirmasi ke penulis.
+
+environment:
+  tropical_rh_threshold:
+    value: 80
+    unit: "percent RH"
+    source: "Dissertation p.61"
+    note: "Di atas ini, oksidasi minyak isolasi dan degradasi isolasi dipercepat."
+
+critical_components:
+  - {id: "oltc",       name_id: "OLTC / Tap Changer"}
+  - {id: "winding",    name_id: "Belitan (Winding)"}
+  - {id: "core",       name_id: "Inti Besi (Core)"}
+  - {id: "bushing",    name_id: "Bushing"}
+  - {id: "cooling",    name_id: "Sistem Pendingin"}
+  - {id: "insulation", name_id: "Sistem Isolasi"}
+# Sumber: Dissertation p.63 — enam komponen ini menyumbang >85% kegagalan trafo MV.

@@ -1,0 +1,46 @@
+# Skala RPN (Risk Priority Number) — AIAG Standard 1–10
+# CATATAN PENTING:
+# Skala 1–10 ini merupakan ASUMSI IMPLEMENTASI (berdasarkan standar industri AIAG/VDA).
+# Naskah Bab I–III belum menetapkan kriteria numerik untuk Severity, Occurrence, dan Detection.
+# File ini disiapkan agar dapat diperbarui saat penulis menetapkan skala final pada Bab IV.
+
+metadata:
+  standard: "AIAG FMEA 4th Edition (Implementation Assumption)"
+  is_assumption: true
+  note: "Skala asumsi implementasi. Harus dikonfirmasi ke penulis disertasi."
+
+severity:
+  1: {rating: 1, label: "None", desc: "Tidak ada pengaruh pada performa trafo."}
+  2: {rating: 2, label: "Very Minor", desc: "Gangguan sangat ringan, tidak menyebabkan trip."}
+  3: {rating: 3, label: "Minor", desc: "Penurunan efisiensi kecil, alarm peringatan berbunyi."}
+  4: {rating: 4, label: "Very Low", desc: "Gangguan ringan, memerlukan inspeksi saat pemeliharaan terjadwal."}
+  5: {rating: 5, label: "Low", desc: "Trip sementara tanpa kerusakan fisik permanen."}
+  6: {rating: 6, label: "Moderate", desc: "Kerusakan komponen non-kritis, outage 1-4 jam."}
+  7: {rating: 7, label: "High", desc: "Kerusakan subsistem penting (mis. tap changer/cooling), outage 4-24 jam."}
+  8: {rating: 8, label: "Very High", desc: "Kerusakan belitan/isolasi berat, trafo keluar dari sistem >24 jam."}
+  9: {rating: 9, label: "Hazardous with Warning", desc: "Kondisi berbahaya dengan peringatan dini (mis. gas DGA tinggi sebelum arc)."}
+  10: {rating: 10, label: "Hazardous without Warning", desc: "Kegagalan katastrofik mendadak (ledakan, kebakaran, EA1-EA5)."}
+
+occurrence:
+  1: {rating: 1, label: "Extremely Unlikely", fail_rate: "< 1 dalam 100.000 jam"}
+  2: {rating: 2, label: "Remote", fail_rate: "1 dalam 50.000 jam"}
+  3: {rating: 3, label: "Very Low", fail_rate: "1 dalam 20.000 jam"}
+  4: {rating: 4, label: "Low", fail_rate: "1 dalam 10.000 jam"}
+  5: {rating: 5, label: "Moderate Low", fail_rate: "1 dalam 5.000 jam"}
+  6: {rating: 6, label: "Moderate", fail_rate: "1 dalam 2.000 jam"}
+  7: {rating: 7, label: "Moderately High", fail_rate: "1 dalam 1.000 jam"}
+  8: {rating: 8, label: "High", fail_rate: "1 dalam 500 jam"}
+  9: {rating: 9, label: "Very High", fail_rate: "1 dalam 200 jam"}
+  10: {rating: 10, label: "Extremely High", fail_rate: "> 1 dalam 100 jam"}
+
+detection:
+  1: {rating: 1, label: "Almost Certain", desc: "Pasti terdeteksi oleh sistem proteksi on-line otomatis (Buchholz, differential)."}
+  2: {rating: 2, label: "Very High", desc: "Sangat mudah terdeteksi melalui SCADA telemetry kontinu."}
+  3: {rating: 3, label: "High", desc: "Terdeteksi melalui uji rutin periodik bulanan."}
+  4: {rating: 4, label: "Moderately High", desc: "Terdeteksi melalui inspeksi visual mingguan."}
+  5: {rating: 5, label: "Moderate", desc: "Terdeteksi saat DGA berkala 6 bulanan."}
+  6: {rating: 6, label: "Low", desc: "Memerlukan pengujian elektrik khusus (tan delta / sweep frequency)."}
+  7: {rating: 7, label: "Very Low", desc: "Gejala samar, hanya terdeteksi lewat pengujian destruktif atau sampling mendalam."}
+  8: {rating: 8, label: "Remote", desc: "Sangat sulit terdeteksi sebelum kegagalan fungsional terjadi."}
+  9: {rating: 9, label: "Very Remote", desc: "Hampir tidak ada metode pengujian lapangan yang dapat mendeteksi."}
+  10: {rating: 10, label: "Absolute Uncertainty", desc: "Tidak terdeteksi sama sekali (hidden failure murni tanpa sensor)."}
