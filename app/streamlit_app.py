@@ -162,14 +162,14 @@ def create_reliability_curve(ram_engine: RAMEngine, ttf_list: list[float], censo
             zerolinecolor="#26262e",
             color="#A6A6A4",
         ),
-        height=330,
-        margin=dict(l=35, r=35, t=50, b=30),
+        height=340,
+        margin=dict(l=35, r=35, t=55, b=65),
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
+            yanchor="top",
+            y=-0.22,
+            xanchor="center",
+            x=0.5,
             font=dict(size=10, color="#E6DDC9"),
         ),
     )
@@ -293,42 +293,113 @@ def main():
     rh_badge_bg = "rgba(0, 0, 0, 0.3)" if is_high_rh else "rgba(255, 255, 255, 0.1)"
     rh_badge_color = "#ffffff" if is_high_rh else "#10b981"
 
+    # Global CSS for animated beacons and HUD styling
     st.markdown(
-        f"""
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px;">
-            <!-- KPI 1: Current Load -->
-            <div style="background-color: #141418; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #26262e;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 0.82rem; color: #A6A6A4; font-weight: 500;">⚡ Current Load</span>
-                    <span style="font-size: 0.75rem; background: #26262e; color: #E6DDC9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{load_ratio*100:.1f}%</span>
-                </div>
-                <div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{op_data['load_kva']:,.0f} kVA</div>
-                <div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 4px;">Rated: {np_data['rated_kva']:,.0f} kVA &bull; Pendingin: {np_data['cooling_type']}</div>
-            </div>
-
-            <!-- KPI 2: Synthetic Ester Cooling -->
-            <div style="background-color: #141418; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #26262e;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 0.82rem; color: #A6A6A4; font-weight: 500;">🍃 Synthetic Ester Cooling</span>
-                    <span style="font-size: 0.75rem; background: {cooling_badge_bg}; color: {cooling_badge_color}; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{cooling_text}</span>
-                </div>
-                <div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{np_data['fluid_type'].replace('_', ' ').title()}</div>
-                <div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 4px;">Flash Point: {np_data['flash_point_c']}°C &bull; C₂H₂: {op_data['c2h2_ppm']:.1f} ppm</div>
-            </div>
-
-            <!-- KPI 3: Tropical Humidity & Alert -->
-            <div style="background-color: {rh_bg}; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid {rh_border}; transition: background-color 0.3s ease;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 0.82rem; color: #F4EFE6; font-weight: 500;">💧 Tropical Humidity</span>
-                    <span style="font-size: 0.75rem; background: {rh_badge_bg}; color: {rh_badge_color}; padding: 2px 8px; border-radius: 4px; font-weight: 700;">{rh_badge_text}</span>
-                </div>
-                <div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{op_data['ambient_rh_pct']:.1f}% RH</div>
-                <div style="font-size: 0.78rem; color: #F4EFE6; margin-top: 4px;">Suhu Lingkungan: {op_data['ambient_temp_c']:.1f}°C &bull; Limit: 80% RH</div>
-            </div>
-        </div>
+        """
+        <style>
+        @keyframes pulse-emerald {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); transform: scale(1); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); transform: scale(1.05); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); transform: scale(1); }
+        }
+        @keyframes pulse-danger {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); transform: scale(1); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); transform: scale(1.08); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(1); }
+        }
+        @keyframes pulse-amber {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); transform: scale(1); }
+            70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); transform: scale(1.05); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transform: scale(1); }
+        }
+        .beacon-safe {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #10b981;
+            animation: pulse-emerald 2s infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        .beacon-danger {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            animation: pulse-danger 1.2s infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        .beacon-amber {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #f59e0b;
+            animation: pulse-amber 1.8s infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        .hud-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #18181d;
+            border: 1px solid #2a2a34;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 6px;
+            font-size: 0.8rem;
+        }
+        </style>
         """,
         unsafe_allow_html=True,
     )
+
+    col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
+
+    with col_kpi1:
+        st.markdown(
+            f"""<div style="background-color: #141418; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #26262e; min-height: 110px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="font-size: 0.82rem; color: #A6A6A4; font-weight: 500;">⚡ Current Load</span>
+<span style="font-size: 0.75rem; background: #26262e; color: #E6DDC9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{load_ratio*100:.1f}%</span>
+</div>
+<div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{op_data['load_kva']:,.0f} kVA</div>
+<div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 4px;">Rated: {np_data['rated_kva']:,.0f} kVA &bull; Pendingin: {np_data['cooling_type']}</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    with col_kpi2:
+        st.markdown(
+            f"""<div style="background-color: #141418; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #26262e; min-height: 110px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="font-size: 0.82rem; color: #A6A6A4; font-weight: 500;">🍃 Synthetic Ester Cooling</span>
+<span style="font-size: 0.75rem; background: {cooling_badge_bg}; color: {cooling_badge_color}; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{cooling_text}</span>
+</div>
+<div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{np_data['fluid_type'].replace('_', ' ').title()}</div>
+<div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 4px;">Flash Point: {np_data['flash_point_c']}°C &bull; C₂H₂: {op_data['c2h2_ppm']:.1f} ppm</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    with col_kpi3:
+        st.markdown(
+            f"""<div style="background-color: {rh_bg}; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid {rh_border}; transition: background-color 0.3s ease; min-height: 110px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="font-size: 0.82rem; color: #F4EFE6; font-weight: 500;">💧 Tropical Humidity</span>
+<span style="font-size: 0.75rem; background: {rh_badge_bg}; color: {rh_badge_color}; padding: 2px 8px; border-radius: 4px; font-weight: 700;">{rh_badge_text}</span>
+</div>
+<div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{op_data['ambient_rh_pct']:.1f}% RH</div>
+<div style="font-size: 0.78rem; color: #F4EFE6; margin-top: 4px;">Suhu Lingkungan: {op_data['ambient_temp_c']:.1f}°C &bull; Limit: 80% RH</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------
     # 5. Hero Stage: Live Unit Digital Twin + 3D Transformer Rendering
@@ -345,45 +416,92 @@ def main():
             status_html = "<span style='background:#10b981;color:white;padding:4px 12px;border-radius:6px;font-weight:700;font-size:0.8rem;'>🟢 STATUS: SISTEM NORMAL</span>"
 
         st.markdown(
-            f"""
-            <div style="background-color: #141418; border-radius: 12px; padding: 20px 24px; color: white; border: 1px solid #26262e; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 0.78rem; color: #C95232; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">Digital Twin Asset #{selected_unit_id}</span>
-                        {status_html}
-                    </div>
-                    <h2 style="margin: 0 0 6px 0; font-size: 1.55rem; color: #E6DDC9; font-weight: 700;">
-                        Medium-Voltage Power Transformer {np_data['primary_kv']:.0f} kV / {np_data['rated_kva']:,.0f} kVA
-                    </h2>
-                    <p style="margin: 0 0 16px 0; font-size: 0.88rem; color: #A6A6A4;">
-                        Integrated RAM-FMEA Decision Support System &bull; Utilitas: <strong>{selected_unit.get('utility_code', 'UTIL-A')}</strong>
-                    </p>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.84rem; background: #1c1b20; padding: 12px 16px; border-radius: 8px; border: 1px solid #2a2a34;">
-                        <div><span style="color:#A6A6A4;">Tegangan Primer/Sekunder:</span><br><strong style="color:#E6DDC9;">{np_data['primary_kv']:.1f} kV / {np_data['secondary_kv']:.1f} kV</strong></div>
-                        <div><span style="color:#A6A6A4;">Impedansi Relatif %Z:</span><br><strong style="color:#E6DDC9;">{np_data['impedance_z_pct']:.2f}%</strong></div>
-                        <div><span style="color:#A6A6A4;">Vector Group:</span><br><strong style="color:#E6DDC9;">{np_data['vector_group']}</strong></div>
-                        <div><span style="color:#A6A6A4;">Kapasitas Pemutus IR / Isc:</span><br><strong style="color:#E6DDC9;">{op_data['breaker_ir_ka']:.1f} kA / {op_data['breaker_isc_ka']:.1f} kA</strong></div>
-                    </div>
-                </div>
-                <div style="margin-top: 14px; font-size: 0.8rem; color: #A6A6A4; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Jendela Pengamatan: <strong>87.600 Jam (10 Tahun)</strong></span>
-                    <span>Kegagalan Tercatat: <strong style="color:#C95232;">{len(failures)} Insiden</strong></span>
-                </div>
-            </div>
-            """,
+            f"""<div style="background-color: #141418; border-radius: 12px; padding: 20px 24px; color: white; border: 1px solid #26262e; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+<div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+<span style="font-size: 0.78rem; color: #C95232; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">Digital Twin Asset #{selected_unit_id}</span>
+{status_html}
+</div>
+<h2 style="margin: 0 0 6px 0; font-size: 1.55rem; color: #E6DDC9; font-weight: 700;">
+Medium-Voltage Power Transformer {np_data['primary_kv']:.0f} kV / {np_data['rated_kva']:,.0f} kVA
+</h2>
+<p style="margin: 0 0 16px 0; font-size: 0.88rem; color: #A6A6A4;">
+Integrated RAM-FMEA Decision Support System &bull; Utilitas: <strong>{selected_unit.get('utility_code', 'UTIL-A')}</strong>
+</p>
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.84rem; background: #1c1b20; padding: 12px 16px; border-radius: 8px; border: 1px solid #2a2a34;">
+<div><span style="color:#A6A6A4;">Tegangan Primer/Sekunder:</span><br><strong style="color:#E6DDC9;">{np_data['primary_kv']:.1f} kV / {np_data['secondary_kv']:.1f} kV</strong></div>
+<div><span style="color:#A6A6A4;">Impedansi Relatif %Z:</span><br><strong style="color:#E6DDC9;">{np_data['impedance_z_pct']:.2f}%</strong></div>
+<div><span style="color:#A6A6A4;">Vector Group:</span><br><strong style="color:#E6DDC9;">{np_data['vector_group']}</strong></div>
+<div><span style="color:#A6A6A4;">Kapasitas Pemutus IR / Isc:</span><br><strong style="color:#E6DDC9;">{op_data['breaker_ir_ka']:.1f} kA / {op_data['breaker_isc_ka']:.1f} kA</strong></div>
+</div>
+</div>
+<div style="margin-top: 14px; font-size: 0.8rem; color: #A6A6A4; display: flex; justify-content: space-between; align-items: center;">
+<span>Jendela Pengamatan: <strong>87.600 Jam (10 Tahun)</strong></span>
+<span>Kegagalan Tercatat: <strong style="color:#C95232;">{len(failures)} Insiden</strong></span>
+</div>
+</div>""",
             unsafe_allow_html=True,
         )
 
     with hero_col_right:
-        # Display cropped 3D transformer unit graphic
-        hero_3d_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_3d_unit.png"
-        full_hero_path = Path(__file__).resolve().parent.parent / "assets" / "mvgpt_dashboard_hero.jpg"
-        img_to_show = hero_3d_path if hero_3d_path.exists() else full_hero_path
+        # High-res 3D technical CAD Digital Twin rendering
+        twin_3d_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_3d_digital_twin.jpg"
+        fallback_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_3d_unit.png"
+        img_to_show = twin_3d_path if twin_3d_path.exists() else fallback_path
 
         st.image(
             str(img_to_show),
-            caption=f"Digital Twin Dynamic Visualizer — Asset #{selected_unit_id}",
+            caption=f"⚡ Digital Twin Dynamic CAD Telemetry Model — Unit #{selected_unit_id}",
             use_container_width=True,
+        )
+
+        # Dynamic IoT Telemetry Beacon HUD (Animative & Data-responsive)
+        ea1_beacon = "beacon-danger" if plan.ea_results["EA1"].status != CheckStatus.SAFE else "beacon-safe"
+        ea2_beacon = "beacon-danger" if plan.ea_results["EA2"].status != CheckStatus.SAFE else "beacon-safe"
+        ea3_beacon = "beacon-danger" if plan.ea_results["EA3"].status != CheckStatus.SAFE else "beacon-safe"
+        rh_beacon = "beacon-amber" if is_high_rh else "beacon-safe"
+
+        c2h2_val_color = "#ef4444" if op_data["c2h2_ppm"] > 5.0 else "#10b981"
+        c2h2_text = f"C₂H₂: {op_data['c2h2_ppm']:.1f} ppm ({'BAHAYA >5 ppm' if op_data['c2h2_ppm'] > 5.0 else 'Nominal'})"
+
+        ir_is_danger = op_data["breaker_ir_ka"] < op_data["breaker_isc_ka"]
+        ir_val_color = "#ef4444" if ir_is_danger else "#10b981"
+        ir_text = f"IR {op_data['breaker_ir_ka']:.1f} kA vs Isc {op_data['breaker_isc_ka']:.1f} kA ({'BAHAYA IR < Isc' if ir_is_danger else 'Margin Aman'})"
+
+        aging_val = plan.ea_results["EA3"].measured.get("aging_factor", 1.0)
+        thermal_is_danger = plan.ea_results["EA3"].status != CheckStatus.SAFE
+        thermal_val_color = "#ef4444" if thermal_is_danger else "#10b981"
+        thermal_text = f"Hotspot {op_data.get('top_oil_temp_c', 65.0)+15:.0f}°C ({'Overheating ' + str(round(aging_val, 1)) + 'x' if thermal_is_danger else 'Normal'})"
+
+        rh_val_color = "#C95232" if is_high_rh else "#10b981"
+        rh_text = f"Kelembaban {op_data['ambient_rh_pct']:.1f}% ({'Waspada >80% RH' if is_high_rh else 'Optimal'})"
+
+        st.markdown(
+            f"""<div style="background: #141418; border: 1px solid #26262e; border-radius: 8px; padding: 10px 14px; margin-top: 4px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="font-size: 0.75rem; color: #A6A6A4; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">● Telemetri Digital Twin (IoT Live Sensors)</span>
+<span style="font-size: 0.7rem; color: #C95232; font-weight: 600;">Unit #{selected_unit_id}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<div class="hud-row">
+<div style="display: flex; align-items: center;"><span class="{ea1_beacon}"></span><span style="color:#A6A6A4; font-weight:600;">DGA Gas & Ester:</span></div>
+<span style="color:{c2h2_val_color}; font-weight:700;">{c2h2_text}</span>
+</div>
+<div class="hud-row">
+<div style="display: flex; align-items: center;"><span class="{ea2_beacon}"></span><span style="color:#A6A6A4; font-weight:600;">Circuit Breaker:</span></div>
+<span style="color:{ir_val_color}; font-weight:700;">{ir_text}</span>
+</div>
+<div class="hud-row">
+<div style="display: flex; align-items: center;"><span class="{ea3_beacon}"></span><span style="color:#A6A6A4; font-weight:600;">Pendingin Termal:</span></div>
+<span style="color:{thermal_val_color}; font-weight:700;">{thermal_text}</span>
+</div>
+<div class="hud-row">
+<div style="display: flex; align-items: center;"><span class="{rh_beacon}"></span><span style="color:#A6A6A4; font-weight:600;">Kelembaban Tropis:</span></div>
+<span style="color:{rh_val_color}; font-weight:700;">{rh_text}</span>
+</div>
+</div>
+</div>""",
+            unsafe_allow_html=True,
         )
 
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
