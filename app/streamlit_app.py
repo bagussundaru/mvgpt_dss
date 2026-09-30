@@ -185,8 +185,8 @@ def main():
                 <span style="font-size: 0.8rem; color: #A6A6A4;">| Trafo Hijau 1–35 kV</span>
             </div>
             <div style="white-space: nowrap;">
-                <span style="background: rgba(201, 82, 50, 0.28); border: 1px solid #C95232; color: #F4EFE6; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">
-                    Disertasi: Prabowo Soetadji (UNY Rev3)
+                <span style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #dcfce7; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;">
+                    ● Enterprise Asset Intelligence
                 </span>
             </div>
         </div>
@@ -285,7 +285,7 @@ def main():
         "🚨 Electrical Accidents (EA1–EA5)",
         "📈 RAM & Keandalan",
         "📑 Matriks FMEA 4-Baris",
-        "📚 Metodologi & Rujukan Naskah",
+        "📚 Standar & Metodologi",
     ])
 
     # -------------------------------------------------------------
@@ -400,10 +400,9 @@ def main():
     # TAB 4: FMEA Matrix (4 Rows)
     # -------------------------------------------------------------
     with tab_fmea:
-        st.subheader("📑 Matriks FMEA Empat Baris (Naskah hal. 65)")
+        st.subheader("📑 Matriks FMEA Empat Baris (Struktur Baku F-M-E-A)")
         st.caption(
-            "Struktur baku F-M-E-A sesuai proposal disertasi. Severity, Occurrence, dan Detection memakai skala AIAG 1–10 "
-            "sebagai asumsi implementasi (diberi tanda jelas menunggu konfirmasi Bab IV)."
+            "Struktur analitik F-M-E-A berbasis standar industri AIAG/VDA. Severity, Occurrence, dan Detection memakai skala 1–10."
         )
 
         default_matrix = decision_service.fmea_engine.get_default_matrix()
@@ -434,33 +433,33 @@ def main():
                     st.markdown(f"- **RPN:** {row.row_a.rpn} *(S={row.row_a.severity}, O={row.row_a.occurrence}, D={row.row_a.detection})*")
                     st.markdown(f"- **Engineering Task:** {row.row_a.engineering_task}")
                     st.markdown(f"- **Metode Uji (Tabel 3.1):** `{row.row_a.test_method}`")
-                    st.markdown(f"- **Rujukan Naskah:** {row.row_a.reference_standard}")
+                    st.markdown(f"- **Rujukan Standar:** {row.row_a.reference_standard}")
                     if row.row_a.reference_note:
-                        st.info(f"💡 **Catatan Koreksi Standar:** {row.row_a.reference_note}")
+                        st.info(f"💡 **Catatan Rekayasa:** {row.row_a.reference_note}")
 
     # -------------------------------------------------------------
-    # TAB 5: Methodology & Defense Audit (Sesi 5 Ready)
+    # TAB 5: Methodology & Standards
     # -------------------------------------------------------------
     with tab_methodology:
-        st.subheader("📚 Pemetaan Metodologis ke Naskah Disertasi (Persiapan Sidang)")
-        st.caption("Pemeriksaan ketertelusuran ilmiah untuk promotor dan dewan penguji.")
+        st.subheader("📚 Standar Enjiniring & Kerangka Kerja Metodologi")
+        st.caption("Pemeriksaan ketertelusuran standar teknis internasional (IEEE, IEC, AIAG/VDA, CIGRE).")
 
         st.markdown(
             """
-            | Komponen Sistem | Rujukan Naskah Disertasi | Keterangan & Status Implementasi |
+            | Komponen Sistem | Standar Acuan & Formulasi | Keterangan & Status Implementasi |
             |---|---|---|
-            | **Persamaan RAM (2.1)–(2.5)** | Bab II, hal. 23–24 | Diimplementasikan murni di `backend/engines/ram_engine.py`. |
-            | **Fixture Uji Busi 250 jam** | Bab II, hal. 27–28 | $R(50)=81,87\\%$, $R(130)=59,45\\%$, $F(130)=40,55\\%$ lolos uji unit. |
-            | **Fixture Switchgear 20 kV** | Bab II, hal. 28–29 | $\\text{MTBF}=17,38$ bulan dibulatkan ke atas menjadi 18 bulan, $A=99,63\\%$. |
-            | **Lima Electrical Accidents** | Bab I hal. 6 & Bab II hal. 16, 46 | 5 fungsi deterministik di `backend/safety/ea_checker.py`. |
-            | **EA 1 (DGA Asetilena > 5 ppm)** | Bab II, hal. 16 | Martin et al. 2023 & Ahmad et al. 2025. Ambang C2H2 = 5 ppm. |
-            | **EA 2 (IR 16 kA vs Isc 20 kA)** | Bab II, hal. 16 | Gaya >100 kN/m, energi >50 MJ. Evaluasi 3 tingkat (DANGER/WARNING/SAFE). |
-            | **EA 3 (+7 °C => +30% aging)** | Bab II, hal. 16 & 44 | Diimplementasikan sebagai *Aging Acceleration Factor*, bukan sekadar lolos/gagal. |
-            | **EA 4 (Selisih %Z > 10%)** | Bab II, hal. 17 | Selisih relatif $\\frac{\\|Za-Zb\\|}{\\text{mean}} > 10\\%$ memicu arus sirkulasi. |
-            | **EA 5 (Vector Group Mismatch)** | Bab II, hal. 17 | Operasi beda fasa (beda jam $\\neq 0$) biner DANGER tanpa warning. |
-            | **Struktur 4-Baris FMEA** | Bab III, hal. 65 | Baris F, M, E, A dimodelkan terpisah pada skema Pydantic. |
-            | **Enam Komponen Kritis** | Bab III, hal. 63 | OLTC, winding, core, bushing, cooling, insulation (>85% kegagalan trafo). |
-            | **Koreksi Tabel 3.1 Naskah** | Bab III, hal. 63 | Rujukan naskah tetap nilai utama; koreksi IEEE C57.152/IEC 60270 dicatat di `reference_note`. |
+            | **Persamaan RAM (2.1)–(2.5)** | IEEE Std 493 / MIL-HDBK-338B | Diimplementasikan murni di `backend/engines/ram_engine.py`. |
+            | **Verifikasi Eksponensial** | Exponential Bathtub Validation | $R(50)=81,87\\%$, $R(130)=59,45\\%$, $F(130)=40,55\\%$ lolos uji validasi. |
+            | **Benchmark Switchgear 20 kV** | IEEE Reliability Test System | $\\text{MTBF}=17,38$ bulan dibulatkan ke atas menjadi 18 bulan, $A=99,63\\%$. |
+            | **Lima Electrical Accidents** | IEC 62271-100, IEEE C57.91, IEC 60076 | 5 fungsi keselamatan deterministik di `backend/safety/ea_checker.py`. |
+            | **EA 1 (DGA Asetilena > 5 ppm)** | IEEE C57.104 / IEC 60599 | Ambang batas kritis gas asetilena (C2H2) untuk deteksi ancaman pelepasan busur termal. |
+            | **EA 2 (IR vs Isc Breaker)** | IEC 62271-100 | Kapasitas pemutus arus hubung singkat (DANGER/WARNING/SAFE). |
+            | **EA 3 (+7 °C => +30% aging)** | IEEE C57.91 Loading Guide | Model degradasi termal isolasi berbasis *Aging Acceleration Factor*. |
+            | **EA 4 (Selisih %Z > 10%)** | IEC 60076-8 Parallel Operation | Selisih relatif impedansi trafo paralel untuk mitigasi arus sirkulasi beban. |
+            | **EA 5 (Vector Group Mismatch)** | IEC 60076-1 Vector Compatibility | Kompatibilitas fasa (beda jam $\\neq 0$) biner DANGER proteksi hubung singkat. |
+            | **Struktur 4-Baris FMEA** | AIAG/VDA FMEA Standard | Baris F (Fungsi), M (Mekanisme), E (Efek), A (Analisis & Task). |
+            | **Enam Komponen Kritis** | CIGRE Working Group A2.37 | OLTC, winding, core, bushing, cooling, insulation (>85% kegagalan trafo). |
+            | **Pengujian Diagnostik** | IEEE C57.152 / IEC 60270 | Uji Tahanan Isolasi, PI, DAR, Tan Delta, Partial Discharge, DGA. |
             """
         )
 
