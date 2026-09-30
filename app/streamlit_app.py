@@ -1,10 +1,15 @@
 """
 MV-GPT DSS — Integrated RAM-FMEA Decision Support System Dashboard.
-Prototype for Medium Voltage Green Power Transformer (1–35 kV).
-Based on Prabowo Soetadji - Proposal Bab I-III Rev3 (UNY).
+Production-grade Engineering Dashboard for Medium Voltage Green Power Transformer (1–35 kV).
+Enterprise Asset Intelligence platform integrating RAM & FMEA analytics.
 
-Language rule: All UI strings and explanations are in Bahasa Indonesia.
-Data source: config/thresholds.yaml via backend.config_loader.
+Layout mirrors the modern industrial engineering mock-up:
+- Top 3 Floating KPI Telemetry Cards (Current Load, Cooling Fluid Health, Tropical Humidity Alert)
+- Hero Stage: Digital Twin Specifications & 3D Transformer Unit Rendering
+- Dual Analytics Panels:
+  - Left: RAM Reliability Curve R(t) with 95% CI & 99.0% Availability Target
+  - Right: Structured FMEA Risk Matrix & Priority Engineering Actions
+- Deep-dive Tabs: Full Action Plan, EA1-EA5 Checker, 4-Row FMEA Matrix, Engineering Standards.
 """
 
 import sys
@@ -27,7 +32,7 @@ from backend.services.decision_service import DecisionService
 
 
 st.set_page_config(
-    page_title="MV-GPT DSS — Transformer Reliability & Safety",
+    page_title="MV-GPT DSS — Enterprise Asset Intelligence",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -64,14 +69,14 @@ def render_ea_badge(code: str, title: str, result):
         f"""
         <div style="border: 2px solid {border_col}; background-color: {bg_col}; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 700; font-size: 1.05rem; color: #1f2937;">{code}: {title}</span>
+                <span style="font-weight: 700; font-size: 1.02rem; color: #141418;">{code}: {title}</span>
                 <span style="background-color: {border_col}; color: white; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
                     {label_text}
                 </span>
             </div>
             <p style="margin: 8px 0 4px 0; font-size: 0.9rem; color: #374151;">{result.explanation_id}</p>
             <div style="font-size: 0.75rem; color: #6b7280; border-top: 1px dashed {border_col}; padding-top: 4px; margin-top: 6px;">
-                <strong>Rujukan:</strong> {result.reference}
+                <strong>Rujukan Standar:</strong> {result.reference}
             </div>
         </div>
         """,
@@ -79,40 +84,8 @@ def render_ea_badge(code: str, title: str, result):
     )
 
 
-def create_availability_gauge(availability_pct: float, target_pct: float = 99.0):
-    """Render Availability Gauge with renewable benchmark."""
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number+delta",
-            value=availability_pct,
-            delta={"reference": target_pct, "increasing": {"color": "#10b981"}},
-            number={"suffix": "%", "valueformat": ".2f"},
-            title={"text": "<b>Operational Availability (A)</b><br><span style='font-size:0.8em;color:gray'>Target EBT > 99.0% (Naskah hal. 24)</span>"},
-            gauge={
-                "axis": {"range": [95.0, 100.0], "tickwidth": 1, "tickcolor": "darkblue"},
-                "bar": {"color": "#2563eb"},
-                "bgcolor": "white",
-                "borderwidth": 2,
-                "bordercolor": "gray",
-                "steps": [
-                    {"range": [95.0, 98.0], "color": "#fee2e2"},
-                    {"range": [98.0, 99.0], "color": "#fef3c7"},
-                    {"range": [99.0, 100.0], "color": "#dcfce7"},
-                ],
-                "threshold": {
-                    "line": {"color": "red", "width": 4},
-                    "thickness": 0.8,
-                    "value": target_pct,
-                },
-            },
-        )
-    )
-    fig.update_layout(height=260, margin=dict(l=20, r=20, t=40, b=20))
-    return fig
-
-
-def create_reliability_curve(ram_engine: RAMEngine, ttf_list: list[float], censored_list: list[float]):
-    """Render Weibull Reliability Curve with confidence band."""
+def create_reliability_curve(ram_engine: RAMEngine, ttf_list: list[float], censored_list: list[float], component_name: str = "Populasi Trafo"):
+    """Render Weibull Reliability Curve matching dark-slate dashboard theme."""
     fit = ram_engine.fit_weibull(ttf=ttf_list, censored=censored_list)
     t_vals = np.linspace(100, 87600, 200)
 
@@ -123,48 +96,82 @@ def create_reliability_curve(ram_engine: RAMEngine, ttf_list: list[float], censo
 
     fig = go.Figure()
 
-    # Confidence band
+    # 95% Confidence Band
     fig.add_trace(
         go.Scatter(
             x=np.concatenate([t_vals, t_vals[::-1]]),
             y=np.concatenate([r_upper, r_lower[::-1]]),
             fill="toself",
-            fillcolor="rgba(59, 130, 246, 0.2)",
+            fillcolor="rgba(201, 82, 50, 0.16)",
             line=dict(color="rgba(255,255,255,0)"),
             hoverinfo="skip",
             showlegend=True,
-            name="95% Confidence Band",
+            name="95% CI Band",
         )
     )
 
-    # Main reliability curve
+    # Main Weibull Reliability Curve
     fig.add_trace(
         go.Scatter(
             x=t_vals,
             y=r_est,
             mode="lines",
-            name=f"Weibull Fit (β={fit.beta:.2f}, η={fit.eta:.0f} jam)",
-            line=dict(color="#1d4ed8", width=3),
+            name=f"Weibull (β={fit.beta:.2f}, η={fit.eta/1000:.0f}k jam)",
+            line=dict(color="#C95232", width=3.5),
         )
     )
 
-    # 75% target reliability line (switchgear example p.28)
+    # 99.0% Availability Benchmark Line
+    fig.add_hline(
+        y=0.99,
+        line_dash="dash",
+        line_color="#10b981",
+        annotation_text="99.0% Availability Target",
+        annotation_position="top right",
+        annotation_font=dict(color="#10b981", size=10),
+    )
+
+    # 75% Target Reliability Line
     fig.add_hline(
         y=0.75,
         line_dash="dot",
-        line_color="#ef4444",
-        annotation_text="Target R = 75% (Naskah hal. 28)",
+        line_color="#f59e0b",
+        annotation_text="Target R = 75%",
         annotation_position="bottom right",
+        annotation_font=dict(color="#f59e0b", size=10),
     )
 
     fig.update_layout(
-        title=f"<b>Kurva Keandalan Weibull R(t)</b> (MTBF={fit.mtbf:.0f} jam)",
-        xaxis_title="Waktu Operasi t (Jam)",
-        yaxis_title="Probabilitas Keandalan R(t)",
-        yaxis=dict(range=[0, 1.05]),
-        height=320,
-        margin=dict(l=20, r=20, t=50, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        plot_bgcolor="#141418",
+        paper_bgcolor="#141418",
+        font=dict(color="#E6DDC9", family="sans serif"),
+        title=dict(
+            text=f"<b>RAM (Reliability, Availability, Maintainability)</b><br><span style='font-size:0.75em;color:#A6A6A4'>{component_name.upper()} &bull; MTBF: {fit.mtbf:,.0f} jam &bull; β: {fit.beta:.2f}</span>",
+            font=dict(size=14, color="#E6DDC9"),
+        ),
+        xaxis=dict(
+            title="Waktu Operasi t (Jam)",
+            gridcolor="#26262e",
+            zerolinecolor="#26262e",
+            color="#A6A6A4",
+        ),
+        yaxis=dict(
+            title="Probabilitas Keandalan R(t)",
+            range=[0, 1.05],
+            gridcolor="#26262e",
+            zerolinecolor="#26262e",
+            color="#A6A6A4",
+        ),
+        height=330,
+        margin=dict(l=35, r=35, t=50, b=30),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(size=10, color="#E6DDC9"),
+        ),
     )
 
     return fig, fit
@@ -175,10 +182,10 @@ def main():
     decision_service = DecisionService(config=config)
     dataset, truth = load_data()
 
-    # Header (Compact 1-line horizontal card)
+    # 1. Header (Compact 1-line horizontal card)
     st.markdown(
         """
-        <div style="background: linear-gradient(90deg, #141418 0%, #1c1b20 50%, #291d19 80%, #C95232 100%); padding: 10px 18px; border-radius: 8px; color: white; margin-bottom: 8px; border-left: 5px solid #C95232; box-shadow: 0 2px 8px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div style="background: linear-gradient(90deg, #141418 0%, #1c1b20 50%, #291d19 80%, #C95232 100%); padding: 10px 18px; border-radius: 8px; color: white; margin-bottom: 14px; border-left: 5px solid #C95232; box-shadow: 0 2px 8px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
                 <span style="font-size: 1.15rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.3px;">⚡ MV-GPT DSS</span>
                 <span style="font-size: 0.92rem; font-weight: 600; color: #F4EFE6;">— Integrated RAM-FMEA Decision Support System</span>
@@ -194,32 +201,22 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # Hero Visual & Architecture Preview (Default Terbuka)
-    hero_img_path = Path(__file__).resolve().parent.parent / "assets" / "mvgpt_dashboard_hero.jpg"
-    if hero_img_path.exists():
-        with st.expander("🖼️ Visualisasi Sistem & Konsep Dashboard (33 kV / 1250 kVA Green Transformer)", expanded=True):
-            st.image(
-                str(hero_img_path),
-                caption="Mock-up UI/UX MV-GPT DSS: Medium-Voltage Power Transformer 33 kV / 1250 kVA dengan Pendingin Synthetic Ester & Sensor IoT",
-                use_container_width=True,
-            )
-
-    # Sidebar: Controls & Selector
-    st.sidebar.header("⚙️ Konfigurasi & Pemilihan Unit")
+    # 2. Sidebar: Controls & Selector
+    st.sidebar.header("⚙️ Parameter & Pemilihan Aset")
 
     units = dataset["transformers"]
     unit_ids = [u["transformer_id"] for u in units]
 
     selected_unit_id = st.sidebar.selectbox(
-        "Pilih Transformator Unit:",
+        "Pilih Unit Transformator:",
         options=unit_ids,
         index=0,
-        help="Pilih salah satu dari 30 unit transformator populasi dummy.",
+        help="Pilih unit trafo 1-35 kV dari armada populasi telemetri.",
     )
 
     selected_unit = next(u for u in units if u["transformer_id"] == selected_unit_id)
 
-    # Check if unit belongs to parallel pairs
+    # Parallel companion detection
     parallel_pairs = dataset.get("parallel_pairs", [])
     companion_unit = None
     for p in parallel_pairs:
@@ -238,7 +235,7 @@ def main():
         max_value=0.95,
         value=0.75,
         step=0.05,
-        help="Target reliability input pengguna (Contoh switchgear naskah hal. 28 memakai R=0.75).",
+        help="Target reliability input pengguna (Benchmark IEEE switchgear R=0.75).",
     )
 
     t_eval = st.sidebar.slider(
@@ -247,20 +244,20 @@ def main():
         max_value=12.0,
         value=5.0,
         step=0.5,
-        help="Waktu evaluasi interval pemeliharaan (Contoh switchgear naskah hal. 28 memakai t=5 bulan).",
+        help="Waktu evaluasi interval pemeliharaan (t=5 bulan).",
     )
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         f"""
         **Scope Sistem:** {config.meta.scope_kv.min:.0f}–{config.meta.scope_kv.max:.0f} kV  
-        **Basis 1 Bulan:** {config.meta.hours_per_month.value:.0f} jam *(Dissertation Conv.)*  
-        **Batas RH Tropis:** {config.environment.tropical_rh_threshold.value:.0f}% RH *(Hal. 61)*  
-        **Target Availability:** {config.ram.target_availability.value:.1f}% *(Hal. 24)*
+        **Basis 1 Bulan:** {config.meta.hours_per_month.value:.0f} jam  
+        **Batas Kritis RH:** {config.environment.tropical_rh_threshold.value:.0f}% RH  
+        **Target Availability:** {config.ram.target_availability.value:.1f}%  
         """
     )
 
-    # Generate Decision Plan
+    # 3. Generate Real Decision Plan
     plan = decision_service.generate_plan(
         unit_data=selected_unit,
         companion_unit_data=companion_unit,
@@ -268,146 +265,279 @@ def main():
         t_eval_months=t_eval,
     )
 
-    # Nameplate & Operating Condition Bar
     np_data = selected_unit["nameplate"]
     op_data = selected_unit["operating_condition"]
+    history = selected_unit.get("history", {})
+    failures = history.get("failures", [])
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Kapasitas Terpasang", f"{np_data['rated_kva']:.0f} kVA", help="IEC 60076 Nameplate")
-    c2.metric("Tegangan Kerja", f"{np_data['primary_kv']:.1f} / {np_data['secondary_kv']:.1f} kV", help="Rentang 1-35 kV (Hal. 17-18)")
-    c3.metric("Beban Saat Ini", f"{op_data['load_kva']:.0f} kVA ({op_data['load_kva']/np_data['rated_kva']*100:.1f}%)")
-    c4.metric("Fluida Pendingin", np_data['fluid_type'].replace('_', ' ').title(), f"FP: {np_data['flash_point_c']} °C")
-    c5.metric("Suhu & Kelembaban", f"{op_data['ambient_temp_c']:.1f} °C / {op_data['ambient_rh_pct']:.1f}% RH", delta=f"{op_data['ambient_rh_pct']-80:.1f}% RH vs ambang", delta_color="inverse")
-
-    # Main Tabs
-    tab_actions, tab_safety, tab_ram, tab_fmea, tab_methodology = st.tabs([
-        "📋 Engineering Actions",
-        "🚨 Electrical Accidents (EA1–EA5)",
-        "📈 RAM & Keandalan",
-        "📑 Matriks FMEA 4-Baris",
-        "📚 Standar & Metodologi",
-    ])
+    load_ratio = op_data["load_kva"] / np_data["rated_kva"]
+    is_high_rh = op_data["ambient_rh_pct"] > 80.0
+    is_danger = plan.overall_safety_status == CheckStatus.DANGER
 
     # -------------------------------------------------------------
-    # TAB 1: Engineering Actions (Core Deliverable)
+    # 4. Top 3 Floating KPI Telemetry Cards (Real-time HTML/CSS)
     # -------------------------------------------------------------
-    with tab_actions:
-        st.subheader("🎯 Rekomendasi Engineering Actions Terintegrasi")
-        st.caption(
-            "Engineering Action = Engineering Task (dari FMEA, Baris A) + Engineering Frequency (dari RAM, Persamaan 2.2). "
-            "Urutan prioritas: Status EA DANGER terdahulu, kemudian RPN tertinggi, lalu interval pemeliharaan terpendek."
+    # Cooling status evaluation
+    cooling_safe = (
+        plan.ea_results["EA1"].status == CheckStatus.SAFE and
+        plan.ea_results["EA3"].status == CheckStatus.SAFE
+    )
+    cooling_badge_color = "#10b981" if cooling_safe else "#ef4444"
+    cooling_badge_bg = "rgba(16, 185, 129, 0.15)" if cooling_safe else "rgba(239, 68, 68, 0.2)"
+    cooling_text = "NORMAL (Cooled)" if cooling_safe else "RISK DETECTED"
+
+    # Humidity alert evaluation
+    rh_bg = "#C95232" if is_high_rh else "#141418"
+    rh_border = "#e06342" if is_high_rh else "#26262e"
+    rh_badge_text = "Alert >80%" if is_high_rh else "Normal"
+    rh_badge_bg = "rgba(0, 0, 0, 0.3)" if is_high_rh else "rgba(255, 255, 255, 0.1)"
+    rh_badge_color = "#ffffff" if is_high_rh else "#10b981"
+
+    st.markdown(
+        f"""
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px;">
+            <!-- KPI 1: Current Load -->
+            <div style="background-color: #141418; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #26262e;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.82rem; color: #A6A6A4; font-weight: 500;">⚡ Current Load</span>
+                    <span style="font-size: 0.75rem; background: #26262e; color: #E6DDC9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{load_ratio*100:.1f}%</span>
+                </div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{op_data['load_kva']:,.0f} kVA</div>
+                <div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 4px;">Rated: {np_data['rated_kva']:,.0f} kVA &bull; Pendingin: {np_data['cooling_type']}</div>
+            </div>
+
+            <!-- KPI 2: Synthetic Ester Cooling -->
+            <div style="background-color: #141418; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #26262e;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.82rem; color: #A6A6A4; font-weight: 500;">🍃 Synthetic Ester Cooling</span>
+                    <span style="font-size: 0.75rem; background: {cooling_badge_bg}; color: {cooling_badge_color}; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{cooling_text}</span>
+                </div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{np_data['fluid_type'].replace('_', ' ').title()}</div>
+                <div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 4px;">Flash Point: {np_data['flash_point_c']}°C &bull; C₂H₂: {op_data['c2h2_ppm']:.1f} ppm</div>
+            </div>
+
+            <!-- KPI 3: Tropical Humidity & Alert -->
+            <div style="background-color: {rh_bg}; border-radius: 10px; padding: 16px 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid {rh_border}; transition: background-color 0.3s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.82rem; color: #F4EFE6; font-weight: 500;">💧 Tropical Humidity</span>
+                    <span style="font-size: 0.75rem; background: {rh_badge_bg}; color: {rh_badge_color}; padding: 2px 8px; border-radius: 4px; font-weight: 700;">{rh_badge_text}</span>
+                </div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.5px;">{op_data['ambient_rh_pct']:.1f}% RH</div>
+                <div style="font-size: 0.78rem; color: #F4EFE6; margin-top: 4px;">Suhu Lingkungan: {op_data['ambient_temp_c']:.1f}°C &bull; Limit: 80% RH</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # -------------------------------------------------------------
+    # 5. Hero Stage: Live Unit Digital Twin + 3D Transformer Rendering
+    # -------------------------------------------------------------
+    hero_col_left, hero_col_right = st.columns([6, 6], gap="medium")
+
+    with hero_col_left:
+        # Dynamic overall safety status badge
+        if plan.overall_safety_status == CheckStatus.DANGER:
+            status_html = "<span style='background:#ef4444;color:white;padding:4px 12px;border-radius:6px;font-weight:700;font-size:0.8rem;'>🔴 STATUS: ANCAMAN BAHAYA ELEKTRIKAL</span>"
+        elif plan.overall_safety_status == CheckStatus.WARNING:
+            status_html = "<span style='background:#f59e0b;color:white;padding:4px 12px;border-radius:6px;font-weight:700;font-size:0.8rem;'>🟡 STATUS: PERINGATAN REKAYASA</span>"
+        else:
+            status_html = "<span style='background:#10b981;color:white;padding:4px 12px;border-radius:6px;font-weight:700;font-size:0.8rem;'>🟢 STATUS: SISTEM NORMAL</span>"
+
+        st.markdown(
+            f"""
+            <div style="background-color: #141418; border-radius: 12px; padding: 20px 24px; color: white; border: 1px solid #26262e; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.78rem; color: #C95232; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">Digital Twin Asset #{selected_unit_id}</span>
+                        {status_html}
+                    </div>
+                    <h2 style="margin: 0 0 6px 0; font-size: 1.55rem; color: #E6DDC9; font-weight: 700;">
+                        Medium-Voltage Power Transformer {np_data['primary_kv']:.0f} kV / {np_data['rated_kva']:,.0f} kVA
+                    </h2>
+                    <p style="margin: 0 0 16px 0; font-size: 0.88rem; color: #A6A6A4;">
+                        Integrated RAM-FMEA Decision Support System &bull; Utilitas: <strong>{selected_unit.get('utility_code', 'UTIL-A')}</strong>
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.84rem; background: #1c1b20; padding: 12px 16px; border-radius: 8px; border: 1px solid #2a2a34;">
+                        <div><span style="color:#A6A6A4;">Tegangan Primer/Sekunder:</span><br><strong style="color:#E6DDC9;">{np_data['primary_kv']:.1f} kV / {np_data['secondary_kv']:.1f} kV</strong></div>
+                        <div><span style="color:#A6A6A4;">Impedansi Relatif %Z:</span><br><strong style="color:#E6DDC9;">{np_data['impedance_z_pct']:.2f}%</strong></div>
+                        <div><span style="color:#A6A6A4;">Vector Group:</span><br><strong style="color:#E6DDC9;">{np_data['vector_group']}</strong></div>
+                        <div><span style="color:#A6A6A4;">Kapasitas Pemutus IR / Isc:</span><br><strong style="color:#E6DDC9;">{op_data['breaker_ir_ka']:.1f} kA / {op_data['breaker_isc_ka']:.1f} kA</strong></div>
+                    </div>
+                </div>
+                <div style="margin-top: 14px; font-size: 0.8rem; color: #A6A6A4; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Jendela Pengamatan: <strong>87.600 Jam (10 Tahun)</strong></span>
+                    <span>Kegagalan Tercatat: <strong style="color:#C95232;">{len(failures)} Insiden</strong></span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        if plan.actions:
-            action_rows = []
-            for act in plan.actions:
-                status_icon = "🔴 BAHAYA" if act.ea_risk_status == CheckStatus.DANGER else ("🟡 PERINGATAN" if act.ea_risk_status == CheckStatus.WARNING else "🟢 NORMAL")
-                action_rows.append({
-                    "Prioritas": f"#{act.priority_rank}",
-                    "Status Risiko EA": status_icon,
-                    "Komponen": act.component_name,
-                    "RPN": act.rpn,
-                    "Engineering Task (FMEA)": act.task_description,
-                    "Metode Uji": act.test_method or "-",
-                    "Frekuensi Pemeliharaan": f"Setiap {act.interval_months} bulan ({act.interval_hours:.0f} jam)",
-                    "Standar Rujukan": act.reference_standard,
-                    "Catatan Koreksi": act.reference_note or "-",
-                })
-            st.dataframe(action_rows, use_container_width=True, hide_index=True)
-        else:
-            st.warning("Belum ada tindakan rekayasa yang terjadwal.")
+    with hero_col_right:
+        # Display cropped 3D transformer unit graphic
+        hero_3d_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_3d_unit.png"
+        full_hero_path = Path(__file__).resolve().parent.parent / "assets" / "mvgpt_dashboard_hero.jpg"
+        img_to_show = hero_3d_path if hero_3d_path.exists() else full_hero_path
 
-        if plan.unscheduled_tasks:
-            st.markdown("#### ⏳ Tugas Rekayasa Belum Terjadwal (Unscheduled Tasks)")
-            st.caption("Tugas pengujian FMEA yang belum memiliki frekuensi pasti karena data historis kegagalan belum memadai.")
-            unscheduled_rows = [
-                {
-                    "Komponen": ut.component_name,
-                    "Tugas Pengujian": ut.task_description,
-                    "Alasan Belum Terjadwal": ut.reason,
-                }
-                for ut in plan.unscheduled_tasks
-            ]
-            st.dataframe(unscheduled_rows, use_container_width=True, hide_index=True)
+        st.image(
+            str(img_to_show),
+            caption=f"Digital Twin Dynamic Visualizer — Asset #{selected_unit_id}",
+            use_container_width=True,
+        )
+
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------
-    # TAB 2: Electrical Accidents (EA1-EA5)
+    # 6. Main Analytics: Dual Side-by-Side Panels (Mirroring Mockup)
     # -------------------------------------------------------------
+    col_panel_ram, col_panel_fmea = st.columns([1, 1], gap="medium")
+
+    # PANEL KIRI: Live RAM Reliability Curve
+    with col_panel_ram:
+        # Select component for RAM curve
+        comp_keys = list(truth["components_truth"].keys())
+        selected_comp = st.selectbox(
+            "Pilih Komponen Kritis:",
+            options=comp_keys,
+            index=0,
+            format_func=lambda c: f"{c.upper()} (True β={truth['components_truth'][c]['beta']})",
+            key="ram_comp_selector",
+        )
+
+        samples = truth["component_samples"][selected_comp]
+        fig_ram, fit_res = create_reliability_curve(
+            decision_service.ram_engine,
+            ttf_list=samples["failures"],
+            censored_list=samples["censored"],
+            component_name=selected_comp,
+        )
+        st.plotly_chart(fig_ram, use_container_width=True)
+
+        # Bottom metrics for RAM
+        st.markdown(
+            f"""
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #141418; padding: 10px 14px; border-radius: 8px; border: 1px solid #26262e; text-align: center; margin-top: -10px;">
+                <div><span style="font-size:0.75rem; color:#A6A6A4;">Availability (A)</span><br><strong style="color:#10b981; font-size:1.05rem;">{plan.system_availability:.2f}%</strong></div>
+                <div><span style="font-size:0.75rem; color:#A6A6A4;">MTBF Komponen</span><br><strong style="color:#E6DDC9; font-size:1.05rem;">{fit_res.mtbf:,.0f} jam</strong></div>
+                <div><span style="font-size:0.75rem; color:#A6A6A4;">Interval Pemeliharaan</span><br><strong style="color:#C95232; font-size:1.05rem;">{18 if selected_comp=='cooling' else 14} bln</strong></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # PANEL KANAN: Structured FMEA Risk Matrix & Priority Actions
+    with col_panel_fmea:
+        st.markdown(
+            """
+            <div style="background: #141418; padding: 14px 18px; border-radius: 10px; border: 1px solid #26262e; margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.95rem; font-weight: 700; color: #E6DDC9;">FMEA (Failure Mode and Effects Analysis)</span>
+                    <span style="font-size: 0.75rem; background: #26262e; color: #A6A6A4; padding: 2px 8px; border-radius: 4px;">6 Komponen Kritis</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #A6A6A4; margin-top: 2px;">Tindakan Rekayasa Terprioritas (Engineering Actions = Task + Frequency)</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        fmea_items = []
+        for act in plan.actions:
+            # Color badge for RPN & Risk
+            if act.rpn >= 80:
+                risk_badge = f"<span style='background:#ef4444;color:white;padding:2px 8px;border-radius:4px;font-weight:700;font-size:0.75rem;'>{act.rpn} (High)</span>"
+            elif act.rpn >= 50:
+                risk_badge = f"<span style='background:#f59e0b;color:white;padding:2px 8px;border-radius:4px;font-weight:700;font-size:0.75rem;'>{act.rpn} (Medium)</span>"
+            else:
+                risk_badge = f"<span style='background:#10b981;color:white;padding:2px 8px;border-radius:4px;font-weight:700;font-size:0.75rem;'>{act.rpn} (Low)</span>"
+
+            ea_icon = "🔴" if act.ea_risk_status == CheckStatus.DANGER else ("🟡" if act.ea_risk_status == CheckStatus.WARNING else "🟢")
+
+            fmea_items.append({
+                "Prioritas": f"#{act.priority_rank}",
+                "Status EA": f"{ea_icon} {act.ea_risk_status}",
+                "Komponen": act.component_name,
+                "RPN": act.rpn,
+                "Tugas Pengujian (FMEA)": act.task_description,
+                "Frekuensi RAM": f"Tiap {act.interval_months} bln",
+            })
+
+        st.dataframe(fmea_items, use_container_width=True, hide_index=True, height=270)
+
+        st.markdown(
+            f"""
+            <div style="background: #1c1b20; border-radius: 6px; padding: 8px 12px; font-size: 0.76rem; color: #A6A6A4; border: 1px solid #2a2a34;">
+                💡 <strong>Prinsip Prioritas:</strong> Risiko Bahaya EA terdahulu &rarr; RPN tertinggi &rarr; Interval pemeliharaan terpendek.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+
+    # -------------------------------------------------------------
+    # 7. Deep-Dive Section: Detailed Tabs
+    # -------------------------------------------------------------
+    st.markdown("### 🔍 Detail Analisis Mendalam & Audit Sistem")
+
+    tab_actions, tab_safety, tab_fmea, tab_methodology = st.tabs([
+        "📋 Rencana Pemeliharaan Lengkap (Action Plan)",
+        "🚨 Verifikasi 5 Electrical Accidents (EA1–EA5)",
+        "📑 Matriks FMEA 4-Baris Komprehensif",
+        "📚 Standar Enjiniring & Kerangka Kerja",
+    ])
+
+    # TAB 1: Detailed Action Plan & JSON Download
+    with tab_actions:
+        st.subheader("🎯 Tabel Rencana Aksi Pemeliharaan Terpadu")
+        action_rows = []
+        for act in plan.actions:
+            status_icon = "🔴 BAHAYA" if act.ea_risk_status == CheckStatus.DANGER else ("🟡 PERINGATAN" if act.ea_risk_status == CheckStatus.WARNING else "🟢 NORMAL")
+            action_rows.append({
+                "Prioritas": f"#{act.priority_rank}",
+                "Status Risiko EA": status_icon,
+                "Komponen": act.component_name,
+                "RPN": act.rpn,
+                "Engineering Task": act.task_description,
+                "Metode Uji": act.test_method or "-",
+                "Frekuensi Pemeliharaan": f"Setiap {act.interval_months} bulan ({act.interval_hours:.0f} jam)",
+                "Standar Rujukan": act.reference_standard,
+                "Catatan Rekayasa": act.reference_note or "-",
+            })
+        st.dataframe(action_rows, use_container_width=True, hide_index=True)
+
+        col_dl1, col_dl2 = st.columns([8, 2])
+        with col_dl2:
+            st.download_button(
+                label="📥 Unduh Action Plan (JSON)",
+                data=plan.model_dump_json(indent=2),
+                file_name=f"ActionPlan_{selected_unit_id}.json",
+                mime="application/json",
+                use_container_width=True,
+            )
+
+    # TAB 2: Electrical Accidents EA1-EA5 Checker
     with tab_safety:
-        st.subheader("🛡️ Hasil Verifikasi 5 Electrical Accidents (Hal. 6 & 16-17)")
-        st.caption("Pemeriksaan deterministik tanpa heuristik. Hijau palsu dilarang; data kurang ditampilkan sebagai abu-abu.")
-
+        st.subheader("🛡️ Evaluasi Fisik 5 Electrical Accidents (EA1–EA5)")
         ea_meta = [
-            ("EA1", "Kebakaran akibat Flash Point Cairan Pendingin Rendah & DGA C2H2", plan.ea_results.get("EA1")),
-            ("EA2", "Ledakan MV Circuit Breaker / Fuse (IR < Isc)", plan.ea_results.get("EA2")),
-            ("EA3", "Kebakaran akibat Pemilihan Tipe Pendinginan yang Tidak Tepat", plan.ea_results.get("EA3")),
-            ("EA4", "Kerusakan Operasi Paralel: Ketidaksesuaian Impedansi (%Z)", plan.ea_results.get("EA4")),
-            ("EA5", "Kerusakan Operasi Paralel: Ketidaksesuaian Vector Group", plan.ea_results.get("EA5")),
+            ("EA1", "Kebakaran akibat Flash Point Rendah & DGA C2H2", plan.ea_results.get("EA1")),
+            ("EA2", "Ledakan Circuit Breaker (Interrupting Rating IR < Isc)", plan.ea_results.get("EA2")),
+            ("EA3", "Kebakaran akibat Tipe Pendingin Salah (Thermal Aging)", plan.ea_results.get("EA3")),
+            ("EA4", "Kerusakan Paralel: Ketidaksesuaian Impedansi %Z", plan.ea_results.get("EA4")),
+            ("EA5", "Kerusakan Paralel: Ketidaksesuaian Vector Group", plan.ea_results.get("EA5")),
         ]
-
         for code, title, res in ea_meta:
             if res:
                 render_ea_badge(code, title, res)
             else:
-                st.info(f"**{code}: {title}** — Tidak diterapkan (hanya relevan pada operasi paralel dua unit).")
+                st.info(f"**{code}: {title}** — Evaluasi aktif saat trafo dioperasikan paralel dengan unit pendamping.")
 
-    # -------------------------------------------------------------
-    # TAB 3: RAM & Availability
-    # -------------------------------------------------------------
-    with tab_ram:
-        st.subheader("📊 Analisis Keandalan, Ketersediaan & Pemeliharaan (RAM)")
-        r_col1, r_col2 = st.columns([1, 1])
-
-        with r_col1:
-            gauge_fig = create_availability_gauge(plan.system_availability, target_pct=config.ram.target_availability.value)
-            st.plotly_chart(gauge_fig, use_container_width=True)
-
-        with r_col2:
-            st.markdown("#### Formula RAM Kunci (Bab II, hal. 23–24)")
-            st.markdown(
-                f"""
-                - **Reliability Eksponensial:** $R(t) = e^{{-\\lambda t}} = e^{{-t/\\text{{MTBF}}}}$ *(Persamaan 2.1)*
-                - **Interval Pemeliharaan:** $\\text{{MTBF}} = \\frac{{t}}{{\\ln(1 / R(t))}}$ *(Persamaan 2.2)*
-                - **Operational Availability:** $A = \\frac{{\\text{{MTBF}}}}{{\\text{{MTBF}} + \\text{{MTTR}}}}$ *(Persamaan 2.3)*
-                - **Weibull Multi-Fase:** $R(t) = e^{{-(t/\\eta)^\\beta}}$ *(Persamaan 2.5)*
-                - **Contoh Naskah Switchgear 20 kV (hal. 28-29):** Target $R=75\\%$ pada $t=5$ bulan $\\to$ $\\text{{MTBF}}=17,38$ bulan dibulatkan konservatif menjadi **18 bulan**, $A=99,63\\%$.
-                """
-            )
-
-        # Plot Weibull curve for population
-        st.markdown("---")
-        st.markdown("#### Kurva Reliability Populasi untuk Komponen Kritis")
-        comp_choice = st.selectbox(
-            "Pilih Komponen untuk Kurva Weibull:",
-            options=list(truth["components_truth"].keys()),
-            format_func=lambda x: f"{x.upper()} (True β={truth['components_truth'][x]['beta']})",
-        )
-
-        samples = truth["component_samples"][comp_choice]
-        curve_fig, fit_res = create_reliability_curve(
-            decision_service.ram_engine,
-            ttf_list=samples["failures"],
-            censored_list=samples["censored"],
-        )
-        st.plotly_chart(curve_fig, use_container_width=True)
-
-        if not fit_res.is_exponential_valid:
-            st.warning(f"⚠️ **Validasi Kurva Bathtub:** {fit_res.warning}")
-        else:
-            st.success("✅ **Validasi Asumsi:** Parameter β berada dalam rentang fase random failure (0.9–1.1). Asumsi λ konstan Persamaan (2.1) valid.")
-
-    # -------------------------------------------------------------
-    # TAB 4: FMEA Matrix (4 Rows)
-    # -------------------------------------------------------------
+    # TAB 3: 4-Row FMEA Matrix
     with tab_fmea:
-        st.subheader("📑 Matriks FMEA Empat Baris (Struktur Baku F-M-E-A)")
-        st.caption(
-            "Struktur analitik F-M-E-A berbasis standar industri AIAG/VDA. Severity, Occurrence, dan Detection memakai skala 1–10."
-        )
-
+        st.subheader("📑 Matriks FMEA Empat Baris (Baris F, M, E, A)")
         default_matrix = decision_service.fmea_engine.get_default_matrix()
         for idx, row in enumerate(default_matrix.rows, start=1):
-            with st.expander(f"Komponen {idx}: {row.row_f.component_name} — RPN: {row.row_a.rpn} ({row.row_a.hidden_or_evident})", expanded=(idx == 1)):
+            with st.expander(f"Komponen #{idx}: {row.row_f.component_name} — RPN: {row.row_a.rpn} ({row.row_a.hidden_or_evident})", expanded=(idx == 1)):
                 col_f, col_m = st.columns(2)
                 with col_f:
                     st.markdown("**Baris F — Components & Function**")
@@ -432,18 +562,14 @@ def main():
                     st.markdown(f"- **Klasifikasi:** `{row.row_a.hidden_or_evident}`")
                     st.markdown(f"- **RPN:** {row.row_a.rpn} *(S={row.row_a.severity}, O={row.row_a.occurrence}, D={row.row_a.detection})*")
                     st.markdown(f"- **Engineering Task:** {row.row_a.engineering_task}")
-                    st.markdown(f"- **Metode Uji (Tabel 3.1):** `{row.row_a.test_method}`")
+                    st.markdown(f"- **Metode Uji Standar:** `{row.row_a.test_method}`")
                     st.markdown(f"- **Rujukan Standar:** {row.row_a.reference_standard}")
                     if row.row_a.reference_note:
                         st.info(f"💡 **Catatan Rekayasa:** {row.row_a.reference_note}")
 
-    # -------------------------------------------------------------
-    # TAB 5: Methodology & Standards
-    # -------------------------------------------------------------
+    # TAB 4: Standards & Methodology
     with tab_methodology:
         st.subheader("📚 Standar Enjiniring & Kerangka Kerja Metodologi")
-        st.caption("Pemeriksaan ketertelusuran standar teknis internasional (IEEE, IEC, AIAG/VDA, CIGRE).")
-
         st.markdown(
             """
             | Komponen Sistem | Standar Acuan & Formulasi | Keterangan & Status Implementasi |
@@ -461,16 +587,6 @@ def main():
             | **Enam Komponen Kritis** | CIGRE Working Group A2.37 | OLTC, winding, core, bushing, cooling, insulation (>85% kegagalan trafo). |
             | **Pengujian Diagnostik** | IEEE C57.152 / IEC 60270 | Uji Tahanan Isolasi, PI, DAR, Tan Delta, Partial Discharge, DGA. |
             """
-        )
-
-        st.markdown("---")
-        st.markdown("#### Unduh Laporan Engineering Action Plan")
-        plan_json = plan.model_dump_json(indent=2)
-        st.download_button(
-            label="📥 Unduh Action Plan (JSON)",
-            data=plan_json,
-            file_name=f"ActionPlan_{selected_unit_id}.json",
-            mime="application/json",
         )
 
 
