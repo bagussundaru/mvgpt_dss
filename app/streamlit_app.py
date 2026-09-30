@@ -175,28 +175,29 @@ def main():
     decision_service = DecisionService(config=config)
     dataset, truth = load_data()
 
-    # Header
+    # Header (Compact 1-line horizontal card)
     st.markdown(
         """
-        <div style="background: linear-gradient(90deg, #141418 0%, #2b2520 60%, #C95232 100%); padding: 18px 24px; border-radius: 10px; color: white; margin-bottom: 16px; border-left: 6px solid #C95232; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <div>
-                    <h1 style="margin:0; font-size: 1.8rem; color: #E6DDC9; letter-spacing: -0.5px;">⚡ MV-GPT DSS — Integrated RAM-FMEA Decision Support System</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.95rem; color: #F4EFE6; opacity: 0.95;">
-                        Sistem Pendukung Keputusan untuk Transformator Daya Ramah Lingkungan Tegangan Menengah (1–35 kV)<br>
-                        <em style="color: #E6DDC9;">Rujukan Metodologi: Proposal Disertasi Bab I–III (Rev3) — Prabowo Soetadji (UNY)</em>
-                    </p>
-                </div>
+        <div style="background: linear-gradient(90deg, #141418 0%, #1c1b20 50%, #291d19 80%, #C95232 100%); padding: 10px 18px; border-radius: 8px; color: white; margin-bottom: 8px; border-left: 5px solid #C95232; box-shadow: 0 2px 8px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 1.15rem; font-weight: 700; color: #E6DDC9; letter-spacing: -0.3px;">⚡ MV-GPT DSS</span>
+                <span style="font-size: 0.92rem; font-weight: 600; color: #F4EFE6;">— Integrated RAM-FMEA Decision Support System</span>
+                <span style="font-size: 0.8rem; color: #A6A6A4;">| Trafo Hijau 1–35 kV</span>
+            </div>
+            <div style="white-space: nowrap;">
+                <span style="background: rgba(201, 82, 50, 0.28); border: 1px solid #C95232; color: #F4EFE6; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">
+                    Disertasi: Prabowo Soetadji (UNY Rev3)
+                </span>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Hero Visual & Architecture Preview
+    # Hero Visual & Architecture Preview (Default Terbuka)
     hero_img_path = Path(__file__).resolve().parent.parent / "assets" / "mvgpt_dashboard_hero.jpg"
     if hero_img_path.exists():
-        with st.expander("🖼️ Visualisasi Sistem & Konsep Dashboard (33 kV / 1250 kVA Green Transformer)", expanded=False):
+        with st.expander("🖼️ Visualisasi Sistem & Konsep Dashboard (33 kV / 1250 kVA Green Transformer)", expanded=True):
             st.image(
                 str(hero_img_path),
                 caption="Mock-up UI/UX MV-GPT DSS: Medium-Voltage Power Transformer 33 kV / 1250 kVA dengan Pendingin Synthetic Ester & Sensor IoT",
