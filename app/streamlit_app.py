@@ -178,16 +178,30 @@ def main():
     # Header
     st.markdown(
         """
-        <div style="background: linear-gradient(90deg, #1e3a8a 0%, #047857 100%); padding: 18px 24px; border-radius: 10px; color: white; margin-bottom: 20px;">
-            <h1 style="margin:0; font-size: 1.8rem;">MV-GPT DSS — Integrated RAM-FMEA Decision Support System</h1>
-            <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 0.95rem;">
-                Sistem Pendukung Keputusan untuk Transformator Daya Ramah Lingkungan Tegangan Menengah (1–35 kV)<br>
-                <em>Rujukan Metodologi: Proposal Disertasi Bab I–III (Rev3) — Prabowo Soetadji (UNY)</em>
-            </p>
+        <div style="background: linear-gradient(90deg, #141418 0%, #2b2520 60%, #C95232 100%); padding: 18px 24px; border-radius: 10px; color: white; margin-bottom: 16px; border-left: 6px solid #C95232; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h1 style="margin:0; font-size: 1.8rem; color: #E6DDC9; letter-spacing: -0.5px;">⚡ MV-GPT DSS — Integrated RAM-FMEA Decision Support System</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 0.95rem; color: #F4EFE6; opacity: 0.95;">
+                        Sistem Pendukung Keputusan untuk Transformator Daya Ramah Lingkungan Tegangan Menengah (1–35 kV)<br>
+                        <em style="color: #E6DDC9;">Rujukan Metodologi: Proposal Disertasi Bab I–III (Rev3) — Prabowo Soetadji (UNY)</em>
+                    </p>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    # Hero Visual & Architecture Preview
+    hero_img_path = Path(__file__).resolve().parent.parent / "assets" / "mvgpt_dashboard_hero.jpg"
+    if hero_img_path.exists():
+        with st.expander("🖼️ Visualisasi Sistem & Konsep Dashboard (33 kV / 1250 kVA Green Transformer)", expanded=False):
+            st.image(
+                str(hero_img_path),
+                caption="Mock-up UI/UX MV-GPT DSS: Medium-Voltage Power Transformer 33 kV / 1250 kVA dengan Pendingin Synthetic Ester & Sensor IoT",
+                use_container_width=True,
+            )
 
     # Sidebar: Controls & Selector
     st.sidebar.header("⚙️ Konfigurasi & Pemilihan Unit")
