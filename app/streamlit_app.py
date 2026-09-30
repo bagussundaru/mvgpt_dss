@@ -6,7 +6,7 @@ Enterprise Asset Intelligence platform integrating RAM & FMEA analytics.
 Layout conforms to the reference materials:
 - Proposal Bab I–III (Rev3) & PPT Sidang Proposal Disertasi (Prabowo Soetadji, UNY)
 - RAM-FMEA Transformer Safety DSS Technical Architecture & Wireframes:
-  * Page 1 & 8: 2.5D Isometric CAD Cutaway Blueprint with 6 critical components (>85% failures)
+  * Gambar 1.3: Ilustrasi Power Transformer 3-Fasa Riil di Lapangan (Proposal hal. 9 & PPT Slide 4)
   * Page 7: Core Synthesis (Engineering Actions = Engineering Tasks + Engineering Frequency)
   * Page 8: Modul Safety Checker 5 Ancaman Fatal (EA1–EA5 Shields & Parallel Operation Green Light)
   * Page 12: Dashboard APM Wireframe (Reliability Trend, Asset Availability Donut, Actions Scheduler)
@@ -506,25 +506,27 @@ def main():
     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------
-    # 4. Hero Stage: 2.5D Isometric CAD Cutaway Blueprint + Full Safety Suite
-    #    Zero empty space: Height of left and right columns balanced ~560px
+    # 4. Hero Stage: Gambar 1.3 Real-Field Transformer Cutaway & 5 EA Shields
+    #    Directly from Proposal p. 9 & PPT Slide 4 with 15 Physical Components
+    #    Zero empty space: Left and Right column heights perfectly balanced
     # -------------------------------------------------------------
-    hero_col_left, hero_col_right = st.columns([5.5, 6.5], gap="medium")
+    hero_col_left, hero_col_right = st.columns([5.8, 6.2], gap="medium")
 
     with hero_col_left:
-        twin_25d_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_25d_digital_twin.png"
-        blueprint_raw_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_25d_blueprint.png"
-        img_to_show = twin_25d_path if twin_25d_path.exists() else blueprint_raw_path
+        # Load the authentic Gambar 1.3 real field cutaway image
+        real_cutaway_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_real_field_cutaway.png"
+        fallback_path = Path(__file__).resolve().parent.parent / "assets" / "transformer_25d_digital_twin.png"
+        img_to_show = real_cutaway_path if real_cutaway_path.exists() else fallback_path
 
         st.markdown(
             f"""
             <div style="background-color: #141418; border-radius: 10px; padding: 10px 14px; border: 1px solid #26262e; margin-bottom: 6px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.6px;">
-                        ⚡ 2.5D Isometric CAD Cutaway Blueprint (Digital Twin)
+                        ⚡ Gambar 1.3: Unit Power Transformer Riil di Lapangan (Digital Twin Fisik)
                     </span>
                     <span style="font-size: 0.72rem; color: #A6A6A4; background: #1c1b20; padding: 2px 8px; border-radius: 4px;">
-                        Unit #{selected_unit_id}
+                        Unit #{selected_unit_id} &bull; 15 Titik Komponen
                     </span>
                 </div>
             </div>
@@ -534,8 +536,53 @@ def main():
 
         st.image(
             str(img_to_show),
-            caption="Gambar 1.3: Blueprint CAD 2.5D Cutaway Power Transformer 3-Fasa (UNY Proposal & DSS)",
+            caption="Gambar 1.3: Ilustrasi Power Transformer Tiga Fasa Riil di Lapangan (Proposal hal. 9 & PPT Slide 4)",
             use_container_width=True,
+        )
+
+        # 6-Component Dynamic Telemetry Sensor HUD (Directly mapped to the 15 numbered physical field parts)
+        c2h2_danger = op_data["c2h2_ppm"] > 5.0
+        ir_danger = op_data["breaker_ir_ka"] < op_data["breaker_isc_ka"]
+        cooling_danger = plan.ea_results["EA3"].status != CheckStatus.SAFE
+
+        st.markdown(
+            f"""
+            <div style="background: #141418; border: 1px solid #26262e; border-radius: 8px; padding: 8px 12px; margin-top: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-size: 0.74rem; color: #A6A6A4; font-weight: 600; text-transform: uppercase;">
+                        ● Telemetri 6 Komponen Kritis (&gt;85% Kegagalan Trafo MV)
+                    </span>
+                    <span style="font-size: 0.7rem; color: #38bdf8;">Korelasi 15 Bagian Fisik</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px;">
+                    <div class="hud-badge">
+                        <span><span class="{'beacon-danger' if c2h2_danger else 'beacon-safe'}"></span>Conservator/DGA (12, 15):</span>
+                        <strong style="color:{'#ef4444' if c2h2_danger else '#10b981'};">{op_data['c2h2_ppm']:.1f} ppm</strong>
+                    </div>
+                    <div class="hud-badge">
+                        <span><span class="{'beacon-danger' if ir_danger else 'beacon-safe'}"></span>Bushing &amp; CB (7, 8):</span>
+                        <strong style="color:{'#ef4444' if ir_danger else '#10b981'};">IR {op_data['breaker_ir_ka']:.0f} kA</strong>
+                    </div>
+                    <div class="hud-badge">
+                        <span><span class="beacon-safe"></span>Tap Changer / OLTC (9, 10):</span>
+                        <strong style="color:#10b981;">Kontak Stabil</strong>
+                    </div>
+                    <div class="hud-badge">
+                        <span><span class="{'beacon-danger' if cooling_danger else 'beacon-safe'}"></span>Winding Hotspot (2, 3, 4):</span>
+                        <strong style="color:{'#ef4444' if cooling_danger else '#10b981'};">{op_data.get('top_oil_temp_c', 65.0)+15:.0f}°C</strong>
+                    </div>
+                    <div class="hud-badge">
+                        <span><span class="beacon-safe"></span>Core &amp; Frame (1, 6):</span>
+                        <strong style="color:#10b981;">Nominal</strong>
+                    </div>
+                    <div class="hud-badge">
+                        <span><span class="{'beacon-danger' if cooling_danger else 'beacon-safe'}"></span>Radiator Pendingin (11, 13):</span>
+                        <strong style="color:{'#ef4444' if cooling_danger else '#10b981'};">{np_data['cooling_type']}</strong>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     with hero_col_right:
@@ -599,102 +646,59 @@ def main():
         if companion_unit:
             if parallel_authorized:
                 parallel_banner = """
-                <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 6px; padding: 4px 8px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.74rem; color: #dcfce7; font-weight: 600;">🛡️ Izin 'Parallel Operation Green Light' DITERBITKAN</span>
-                    <span style="font-size: 0.68rem; color: #10b981; font-weight: 700;">EA4 & EA5 Lolos</span>
+                <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 6px; padding: 6px 10px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.76rem; color: #dcfce7; font-weight: 600;">🛡️ Izin 'Parallel Operation Green Light' DITERBITKAN</span>
+                    <span style="font-size: 0.7rem; color: #10b981; font-weight: 700;">EA4 &amp; EA5 Lolos</span>
                 </div>
                 """
             else:
                 parallel_banner = """
-                <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 6px; padding: 4px 8px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.74rem; color: #fecaca; font-weight: 600;">🚫 Izin Operasi Paralel DIBLOKIR — Ketidaksesuaian Parameter</span>
-                    <span style="font-size: 0.68rem; color: #ef4444; font-weight: 700;">BAHAYA</span>
+                <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 6px; padding: 6px 10px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.76rem; color: #fecaca; font-weight: 600;">🚫 Izin Operasi Paralel DIBLOKIR — Parameter Tidak Kompatibel</span>
+                    <span style="font-size: 0.7rem; color: #ef4444; font-weight: 700;">BAHAYA</span>
                 </div>
                 """
         else:
             parallel_banner = """
-            <div style="background: #1c1b20; border: 1px solid #2a2a34; border-radius: 6px; padding: 4px 8px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 0.73rem; color: #A6A6A4;">ℹ️ Unit Beroperasi Tunggal (Evaluasi Paralel Aktif Saat Pair Terhubung)</span>
+            <div style="background: #1c1b20; border: 1px solid #2a2a34; border-radius: 6px; padding: 6px 10px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 0.74rem; color: #A6A6A4;">ℹ️ Unit Beroperasi Tunggal (Evaluasi Paralel Aktif Saat Pair Terhubung)</span>
                 <span style="font-size: 0.68rem; color: #A6A6A4;">Standby</span>
             </div>
             """
 
         st.markdown(
             f"""
-            <div style="background-color: #141418; border-radius: 10px; padding: 10px 14px; color: white; border: 1px solid #26262e; margin-bottom: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 0.85rem; font-weight: 700; color: #E6DDC9;">Modul Safety Checker: 5 Ancaman Fatal (EA)</span>
-                    <span style="font-size: 0.7rem; color: #A6A6A4;">Page 8 DSS</span>
+            <div style="background-color: #141418; border-radius: 10px; padding: 12px 16px; color: white; border: 1px solid #26262e;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div>
+                        <span style="font-size: 0.88rem; font-weight: 700; color: #E6DDC9;">Modul Safety Checker: 5 Ancaman Fatal (EA)</span>
+                        <div style="font-size: 0.72rem; color: #A6A6A4;">Perisai deterministik pencegah kegagalan katastrofik (Page 8 DSS)</div>
+                    </div>
+                    <span style="font-size: 0.7rem; color: #C95232; font-weight: 600;">5 Perisai Proteksi</span>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 5px 8px; border-radius: 5px; border-left: 3px solid {'#ef4444' if ea1_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.76rem;">
-                        <span><strong>EA 1:</strong> Kebakaran (Flash Point & C₂H₂ &gt; 5 ppm)</span>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 6px 10px; border-radius: 6px; border-left: 3px solid {'#ef4444' if ea1_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.78rem;">
+                        <span><strong>EA 1:</strong> Kebakaran (Flash Point &amp; DGA C₂H₂ &gt; 5 ppm)</span>
                         {status_badge_html(ea1_res)}
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 5px 8px; border-radius: 5px; border-left: 3px solid {'#ef4444' if ea2_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.76rem;">
-                        <span><strong>EA 2:</strong> Ledakan Circuit Breaker (IR &lt; Isc)</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 6px 10px; border-radius: 6px; border-left: 3px solid {'#ef4444' if ea2_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.78rem;">
+                        <span><strong>EA 2:</strong> Ledakan Circuit Breaker (Interrupting Rating IR &lt; Isc)</span>
                         {status_badge_html(ea2_res)}
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 5px 8px; border-radius: 5px; border-left: 3px solid {'#ef4444' if ea3_res.status==CheckStatus.DANGER else ('#f59e0b' if ea3_res.status==CheckStatus.WARNING else '#10b981')}; font-size: 0.76rem;">
-                        <span><strong>EA 3:</strong> Overheating &amp; Penuaan Isolasi (+7°C ⇒ +30%)</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 6px 10px; border-radius: 6px; border-left: 3px solid {'#ef4444' if ea3_res.status==CheckStatus.DANGER else ('#f59e0b' if ea3_res.status==CheckStatus.WARNING else '#10b981')}; font-size: 0.78rem;">
+                        <span><strong>EA 3:</strong> Overheating &amp; Penuaan Isolasi (+7°C ⇒ +30% aging)</span>
                         {status_badge_html(ea3_res)}
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 5px 8px; border-radius: 5px; border-left: 3px solid {'#ef4444' if ea4_res and ea4_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.76rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 6px 10px; border-radius: 6px; border-left: 3px solid {'#ef4444' if ea4_res and ea4_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.78rem;">
                         <span><strong>EA 4:</strong> Kerusakan Paralel: Ketidaksesuaian %Z (|Δ%Z| &gt; 10%)</span>
                         {status_badge_html(ea4_res)}
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 5px 8px; border-radius: 5px; border-left: 3px solid {'#ef4444' if ea5_res and ea5_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.76rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1b20; padding: 6px 10px; border-radius: 6px; border-left: 3px solid {'#ef4444' if ea5_res and ea5_res.status==CheckStatus.DANGER else '#10b981'}; font-size: 0.78rem;">
                         <span><strong>EA 5:</strong> Kerusakan Paralel: Ketidaksesuaian Vector Group</span>
                         {status_badge_html(ea5_res)}
                     </div>
                 </div>
                 {parallel_banner}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # CARD 3: Telemetri Sensor 6 Komponen Kritis (>85% Failure Scope)
-        # Positioned here on the right to flush-align with the 2.5D blueprint on the left!
-        c2h2_danger = op_data["c2h2_ppm"] > 5.0
-        ir_danger = op_data["breaker_ir_ka"] < op_data["breaker_isc_ka"]
-        cooling_danger = plan.ea_results["EA3"].status != CheckStatus.SAFE
-
-        st.markdown(
-            f"""
-            <div style="background: #141418; border: 1px solid #26262e; border-radius: 8px; padding: 8px 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <span style="font-size: 0.74rem; color: #A6A6A4; font-weight: 600; text-transform: uppercase;">
-                        ● Telemetri Sensor 6 Komponen Kritis (&gt;85% Failure Scope)
-                    </span>
-                    <span style="font-size: 0.7rem; color: #38bdf8;">CIGRE A2.37</span>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px;">
-                    <div class="hud-badge">
-                        <span><span class="{'beacon-danger' if c2h2_danger else 'beacon-safe'}"></span>Conservator/DGA:</span>
-                        <strong style="color:{'#ef4444' if c2h2_danger else '#10b981'};">{op_data['c2h2_ppm']:.1f} ppm</strong>
-                    </div>
-                    <div class="hud-badge">
-                        <span><span class="{'beacon-danger' if ir_danger else 'beacon-safe'}"></span>Bushing &amp; CB:</span>
-                        <strong style="color:{'#ef4444' if ir_danger else '#10b981'};">IR {op_data['breaker_ir_ka']:.0f} kA</strong>
-                    </div>
-                    <div class="hud-badge">
-                        <span><span class="beacon-safe"></span>Tap Changer (OLTC):</span>
-                        <strong style="color:#10b981;">Kontak Stabil</strong>
-                    </div>
-                    <div class="hud-badge">
-                        <span><span class="{'beacon-danger' if cooling_danger else 'beacon-safe'}"></span>Winding Hotspot:</span>
-                        <strong style="color:{'#ef4444' if cooling_danger else '#10b981'};">{op_data.get('top_oil_temp_c', 65.0)+15:.0f}°C</strong>
-                    </div>
-                    <div class="hud-badge">
-                        <span><span class="beacon-safe"></span>Core Lamination:</span>
-                        <strong style="color:#10b981;">Nominal</strong>
-                    </div>
-                    <div class="hud-badge">
-                        <span><span class="{'beacon-danger' if cooling_danger else 'beacon-safe'}"></span>Radiator Pendingin:</span>
-                        <strong style="color:{'#ef4444' if cooling_danger else '#10b981'};">{np_data['cooling_type']}</strong>
-                    </div>
-                </div>
             </div>
             """,
             unsafe_allow_html=True,
